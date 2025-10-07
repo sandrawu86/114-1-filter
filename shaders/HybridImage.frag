@@ -51,6 +51,6 @@ void main()
     highpass += texture2D(u_tex1, uv + texel * vec2( 0.0,  1.0)) * -1.0;
     highpass = clamp(highpass + 0.5, 0.0, 1.0);
     // 混合
-    float alpha = 0.05; // 可調整混合比例
+    float alpha = 0.1; // 可調整混合比例
     gl_FragColor = mix(lowpass, highpass, alpha);
 }
