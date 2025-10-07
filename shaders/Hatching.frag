@@ -26,7 +26,7 @@ void main()
     float imgAspect = 1.0; // 預設 1:1
     #ifdef GL_ES
     // 若已知原始圖片寬高比，可直接填入
-    imgAspect = 800.0 / 600.0;
+    imgAspect = 532.0 / 800.0;
     #endif
     float canvasAspect = u_resolution.x / u_resolution.y;
     if (canvasAspect > imgAspect) {
