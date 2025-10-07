@@ -16,36 +16,42 @@ uniform sampler2D u_tex4;
 uniform sampler2D u_tex5;
 uniform sampler2D u_tex6;
 
+// 可調整模糊強度，建議設為 1.0 避免疊影
+const float blurSize = 5.0;
+
 void main()
 {
-    vec2 uv=gl_FragCoord.xy/u_resolution.xy;
-    vec2 vUv=fract(6.*uv);//key
-    // uv.x*=u_resolution.x/u_resolution.y;
-    float shading=texture2D(u_tex0,uv).g;//取MonaLisa綠色版作為明亮值
-    
-    vec4 c;
-    float step=1./6.;
-    if(shading<=step){
-        c=mix(texture2D(u_tex6,vUv),texture2D(u_tex5,vUv),6.*shading);
+    // 依據畫布比例修正 uv，確保原始照片比例
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    float imgAspect = 1.0; // 預設 1:1
+    #ifdef GL_ES
+    // 若已知原始圖片寬高比，可直接填入
+    imgAspect = 800.0 / 600.0;
+    #endif
+    float canvasAspect = u_resolution.x / u_resolution.y;
+    if (canvasAspect > imgAspect) {
+        uv.x = (uv.x - 0.5) * (canvasAspect / imgAspect) + 0.5;
+    } else {
+        uv.y = (uv.y - 0.5) * (imgAspect / canvasAspect) + 0.5;
     }
-    if(shading>step&&shading<=2.*step){
-        c=mix(texture2D(u_tex5,vUv),texture2D(u_tex4,vUv),6.*(shading-step));
+    vec2 texel = blurSize * (1.0 / u_resolution.xy);
+    vec4 sum = vec4(0.0);
+    float kernel[7];
+    kernel[0] = 0.5;
+    kernel[1] = 2.0;
+    kernel[2] = 6.0;
+    kernel[3] = 12.0;
+    kernel[4] = 6.0;
+    kernel[5] = 2.0;
+    kernel[6] = 0.5;
+    float total = 0.0;
+    for(int i = -3; i <= 3; i++) {
+        for(int j = -3; j <= 3; j++) {
+            float weight = kernel[i+3] * kernel[j+3];
+            sum += texture2D(u_tex0, uv + texel * vec2(float(i), float(j))) * weight;
+            total += weight;
+        }
     }
-    if(shading>2.*step&&shading<=3.*step){
-        c=mix(texture2D(u_tex4,vUv),texture2D(u_tex3,vUv),6.*(shading-2.*step));
-    }
-    if(shading>3.*step&&shading<=4.*step){
-        c=mix(texture2D(u_tex3,vUv),texture2D(u_tex2,vUv),6.*(shading-3.*step));
-    }
-    if(shading>4.*step&&shading<=5.*step){
-        c=mix(texture2D(u_tex2,vUv),texture2D(u_tex1,vUv),6.*(shading-4.*step));
-    }
-    if(shading>5.*step){
-        c=mix(texture2D(u_tex1,vUv),vec4(1.),6.*(shading-5.*step));
-    }
-    
-    vec4 inkColor=vec4(0.,0.,1.,1.);
-    vec4 src=mix(mix(inkColor,vec4(1.),c.r),c,.5);
-    gl_FragColor=src;
+    gl_FragColor = sum / total;
     
 }
