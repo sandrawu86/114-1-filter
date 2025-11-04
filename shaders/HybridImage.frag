@@ -15,7 +15,7 @@ void main()
 {
     // 依據畫布比例修正 uv，確保原始照片比例
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    float imgAspect = 532.0 / 800.0;
+    float imgAspect = 2368.0 / 1728.0;
     float canvasAspect = u_resolution.x / u_resolution.y;
     if (canvasAspect > imgAspect) {
         uv.x = (uv.x - 0.5) * (canvasAspect / imgAspect) + 0.5;
@@ -51,6 +51,6 @@ void main()
     highpass += texture2D(u_tex1, uv + texel * vec2( 0.0,  1.0)) * -1.0;
     highpass = clamp(highpass + 0.5, 0.0, 1.0);
     // 混合
-    float alpha = 0.1; // 可調整混合比例
+    float alpha = 0.15; // 可調整混合比例
     gl_FragColor = mix(lowpass, highpass, alpha);
 }
