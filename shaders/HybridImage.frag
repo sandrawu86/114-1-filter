@@ -8,6 +8,7 @@ precision mediump float;
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0; // 低通（模糊）
 uniform sampler2D u_tex1; // 高通（細節）
+uniform vec2 u_mouse; // 由 GlslCanvas 傳入，畫面上的滑鼠座標 (px)
 
 const float blurSize = 5.0;
 
@@ -50,7 +51,13 @@ void main()
     highpass += texture2D(u_tex1, uv + texel * vec2( 1.0,  0.0)) * -1.0;
     highpass += texture2D(u_tex1, uv + texel * vec2( 0.0,  1.0)) * -1.0;
     highpass = clamp(highpass + 0.5, 0.0, 1.0);
-    // 混合
-    float alpha = 0.15; // 可調整混合比例
+    // 混合：使用滑鼠水平位置控制 alpha
+    // u_mouse.x 在畫布座標系中（像素），將其正規化到 [0,1]
+    float mouseNorm = clamp(u_mouse.x / u_resolution.x, 0.0, 1.0);
+    // 這裡不使用線性對應，改用冪次(non-linear)映射，使畫面中間時 alpha 約為 0.2
+    // 若 mouseNorm = 0.5 時要得到 alpha ~= 0.2，可使用 gamma ≈ 2.322
+    float gamma = 2.322;
+    float alpha = pow(mouseNorm, gamma);
+    // 若要反向映射（滑鼠中間為 0.8），可用: alpha = 1.0 - pow(1.0 - mouseNorm, gamma);
     gl_FragColor = mix(lowpass, highpass, alpha);
 }
